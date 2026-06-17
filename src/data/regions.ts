@@ -32,6 +32,11 @@ export const REGIONS: Region[] = [
   { code: "RU", name: "Russia", currency: "RUB", symbol: "₽", fallbackRate: 88, flag: "🇷🇺" },
 ];
 
+/** O(1) lookup of a region by its code. Built once at module load. */
+export const REGION_BY_CODE: ReadonlyMap<string, Region> = new Map(
+  REGIONS.map((r) => [r.code, r]),
+);
+
 export function regionByCode(code: string): Region | undefined {
-  return REGIONS.find((r) => r.code === code);
+  return REGION_BY_CODE.get(code);
 }

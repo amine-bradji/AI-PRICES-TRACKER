@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState, useTransition } from "react";
 import type { ComputedOffer } from "@/lib/types";
-import { REGIONS } from "@/data/regions";
+import { REGION_BY_CODE } from "@/data/regions";
 import { formatLocalPrice, formatUsd } from "@/lib/format";
 import type { BillingMode } from "@/components/Toolbar";
 
@@ -15,9 +15,10 @@ interface Props {
 }
 
 /** Sortable price comparison table. Honors billing mode (monthly vs annual). */
-export function PriceTable({ offers, billing }: Props) {
+function PriceTableBase({ offers, billing }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("usd");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [, startTransition] = useTransition();
 
   const sorted = useMemo(() => {
     const copy = [...offers];
@@ -41,17 +42,20 @@ export function PriceTable({ offers, billing }: Props) {
   }, [offers, sortKey, sortDir, billing]);
 
   function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
+    // Non-urgent: keep the header click instant, let the re-sort settle a frame later.
+    startTransition(() => {
+      if (sortKey === key) {
+        setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      } else {
+        setSortKey(key);
+        setSortDir("asc");
+      }
+    });
   }
 
   if (offers.length === 0) {
     return (
-      <div className="card p-10 text-center text-slate-500 dark:text-slate-400">
+      <div className="card p-10 text-center text-ink-secondary">
         No offers match the current filters.
       </div>
     );
@@ -62,18 +66,18 @@ export function PriceTable({ offers, billing }: Props) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[46rem] border-collapse text-sm">
           <thead>
-            <tr className="border-b border-slate-200 dark:border-slate-800 text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              <Th label="Provider" active={sortKey === "provider"} dir={sortDir} onClick={() => toggleSort("provider")} />
-              <Th label="Tier" active={sortKey === "tier"} dir={sortDir} onClick={() => toggleSort("tier")} />
-              <Th label="Region" active={sortKey === "region"} dir={sortDir} onClick={() => toggleSort("region")} />
-              <Th label={billing === "annual" ? "Annual" : "Local price"} align="right" active={sortKey === "local"} dir={sortDir} onClick={() => toggleSort("local")} />
-              <Th label="USD eq." align="right" active={sortKey === "usd"} dir={sortDir} onClick={() => toggleSort("usd")} />
+            <tr className="border-b border-hairline text-left text-xs uppercase tracking-wide text-ink-tertiary">
+              <Th label="Provider" sortKey="provider" active={sortKey === "provider"} dir={sortDir} onSort={toggleSort} />
+              <Th label="Tier" sortKey="tier" active={sortKey === "tier"} dir={sortDir} onSort={toggleSort} />
+              <Th label="Region" sortKey="region" active={sortKey === "region"} dir={sortDir} onSort={toggleSort} />
+              <Th label={billing === "annual" ? "Annual" : "Local price"} sortKey="local" align="right" active={sortKey === "local"} dir={sortDir} onSort={toggleSort} />
+              <Th label="USD eq." sortKey="usd" align="right" active={sortKey === "usd"} dir={sortDir} onSort={toggleSort} />
               <th className="px-4 py-3 font-medium">Note</th>
             </tr>
           </thead>
           <tbody>
-            {sorted.map((o, i) => {
-              const region = REGIONS.find((r) => r.code === o.regionCode);
+            {sorted.map((o) => {
+              const region = REGION_BY_CODE.get(o.regionCode);
               const local = effectiveLocal(o, billing);
               const usd = effectiveUsd(o, billing);
               const hasAnnualDiscount = o.annualUsdEquivalent != null && billing === "annual";
@@ -82,41 +86,49 @@ export function PriceTable({ offers, billing }: Props) {
                 : null;
               return (
                 <tr
-                  key={`${o.providerId}-${o.tierId}-${o.regionCode}-${i}`}
-                  className="border-b border-slate-200/60 dark:border-slate-200 dark:border-slate-800/60 transition hover:bg-gray-100 dark:hover:bg-gray-100/60 dark:bg-gray-200 dark:bg-slate-800/30"
+                  key={`${o.providerId}-${o.tierId}-${o.regionCode}`}
+                  className="border-b border-hairline transition-colors hover:bg-subtle"
                 >
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2 font-medium">
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: o.providerColor }} />
+                    <div className="flex items-center gap-2 font-medium text-ink-primary">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: o.providerColor }} aria-hidden="true" />
                       {o.providerName}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{o.tierName}</td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    {region?.flag} {o.regionCode}
+                  <td className="px-4 py-3 text-ink-secondary">{o.tierName}</td>
+                  <td className="px-4 py-3 text-ink-secondary">
+                    <span aria-hidden="true">{region?.flag} </span>
+                    {o.regionCode}
                   </td>
                   <td className="px-4 py-3 text-right">
                     {o.isFree ? (
-                      <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-bold text-emerald-300">
-                        FREE
+                      <span
+                        className="rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                        style={{
+                          borderColor: "var(--ok)",
+                          color: "var(--ok)",
+                          backgroundColor: "var(--ok-bg)",
+                        }}
+                      >
+                        Free
                       </span>
                     ) : (
                       <div>
-                        <span className="font-semibold text-white">
+                        <span className="font-semibold text-ink-primary">
                           {formatLocalPrice(local, o.currency, o.symbol)}
                         </span>
                         {hasAnnualDiscount && monthlyEff != null && (
-                          <div className="text-[11px] text-slate-400 dark:text-slate-500">
+                          <div className="text-xs text-ink-tertiary">
                             ≈ {formatUsd(monthlyEff)}/mo
                           </div>
                         )}
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right text-slate-500 dark:text-slate-400">
+                  <td className="px-4 py-3 text-right text-ink-tertiary">
                     {formatUsd(usd)}
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
+                  <td className="px-4 py-3 text-xs text-ink-tertiary">
                     {o.regionalHeadline
                       ? `${o.regionalHeadline}${o.regionalNote ? ` — ${o.regionalNote}` : ""}`
                       : o.billingCycle}
@@ -131,30 +143,47 @@ export function PriceTable({ offers, billing }: Props) {
   );
 }
 
+export const PriceTable = memo(PriceTableBase);
+
 function Th({
   label,
+  sortKey,
   align = "left",
   active,
   dir,
-  onClick,
+  onSort,
 }: {
   label: string;
+  sortKey: SortKey;
   align?: "left" | "right";
   active: boolean;
   dir: SortDir;
-  onClick: () => void;
+  onSort: (key: SortKey) => void;
 }) {
   return (
     <th
-      onClick={onClick}
-      className={`cursor-pointer select-none px-4 py-3 font-medium transition hover:text-slate-700 dark:hover:text-slate-700 dark:text-slate-200 ${align === "right" ? "text-right" : ""}`}
+      scope="col"
+      aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"}
+      className="p-0 font-medium"
     >
-      <span className="inline-flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={`flex w-full select-none items-center gap-1 px-4 py-3 transition-colors text-ink-tertiary hover:text-ink-primary ${
+          align === "right" ? "justify-end" : ""
+        }`}
+      >
         {label}
-        <span className={`text-[10px] ${active ? "text-brand-400" : "text-slate-500 dark:text-slate-600"}`}>
+        <span
+          aria-hidden="true"
+          className={`text-[10px] ${active ? "text-ink-primary" : "text-ink-tertiary"}`}
+        >
           {active ? (dir === "asc" ? "▲" : "▼") : "↕"}
         </span>
-      </span>
+        <span className="sr-only">
+          {active ? `, sorted ${dir === "asc" ? "ascending" : "descending"}` : ", click to sort"}
+        </span>
+      </button>
     </th>
   );
 }

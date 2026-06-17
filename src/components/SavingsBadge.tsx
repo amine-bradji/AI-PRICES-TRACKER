@@ -7,8 +7,8 @@ interface Props {
 }
 
 /**
- * Shows the savings percentage when paying annually vs monthly.
- * E.g. "Save 17%" with a green badge — only renders when there's an actual discount.
+ * Shows the savings percentage when paying annually vs monthly. Only renders
+ * when there is an actual discount.
  */
 export function SavingsBadge({ monthlyUsd, annualUsd, annualUsdEquivalent }: Props) {
   if (!annualUsd || annualUsd >= monthlyUsd * 12 || monthlyUsd <= 0) return null;
@@ -20,9 +20,16 @@ export function SavingsBadge({ monthlyUsd, annualUsd, annualUsdEquivalent }: Pro
   if (savingsPct <= 0) return null;
 
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
-      💰 Save {savingsPct}%
-      <span className="text-emerald-400/70">${savingsUsd}/mo</span>
+    <span
+      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold"
+      style={{
+        borderColor: "var(--ok)",
+        color: "var(--ok)",
+        backgroundColor: "var(--ok-bg)",
+      }}
+    >
+      Save {savingsPct}%
+      <span style={{ opacity: 0.75 }}>${savingsUsd}/mo</span>
     </span>
   );
 }

@@ -57,31 +57,31 @@ export default function DocsPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">
-      <h1 className="mb-2 text-2xl font-bold">API Documentation</h1>
-      <p className="mb-8 text-slate-500 dark:text-slate-400">
+      <h1 className="mb-2 text-2xl font-semibold tracking-tight text-ink-primary">API documentation</h1>
+      <p className="mb-8 text-sm text-ink-secondary">
         The AI Price Tracker exposes a small REST API for programmatic access to pricing data.
-        All responses are JSON. The <code className="text-brand-400">POST /api/update</code> endpoint is
+        All responses are JSON. The <code style={{ color: "var(--accent)" }}>POST /api/update</code> endpoint is
         rate-limited to prevent upstream server abuse.
       </p>
 
       <div className="flex flex-col gap-6">
         {endpoints.map((ep) => (
           <section key={ep.path} className="card overflow-hidden">
-            <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 bg-gray-50 dark:bg-white dark:bg-slate-900/40 px-5 py-3">
+            <div className="flex items-center gap-3 border-b border-hairline px-5 py-3">
               <MethodBadge method={ep.method} />
-              <code className="font-mono text-sm font-semibold text-white">{ep.path}</code>
+              <code className="font-mono text-sm font-semibold text-ink-primary">{ep.path}</code>
             </div>
             <div className="p-5">
-              <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">{ep.description}</p>
+              <p className="mb-4 text-sm text-ink-secondary">{ep.description}</p>
 
               {"params" in ep && ep.params && (
                 <div className="mb-4">
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Query Parameters
+                  <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-tertiary">
+                    Query parameters
                   </h3>
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-left text-xs uppercase text-slate-400 dark:text-slate-500">
+                      <tr className="text-left text-xs uppercase text-ink-tertiary">
                         <th className="pb-1 pr-4 font-medium">Name</th>
                         <th className="pb-1 pr-4 font-medium">Type</th>
                         <th className="pb-1 pr-4 font-medium">Example</th>
@@ -91,10 +91,10 @@ export default function DocsPage() {
                     <tbody>
                       {ep.params.map((p) => (
                         <tr key={p.name}>
-                          <td className="py-1 pr-4 font-mono text-brand-400">{p.name}</td>
-                          <td className="py-1 pr-4 text-slate-400 dark:text-slate-500">{p.type}</td>
-                          <td className="py-1 pr-4 text-slate-500 dark:text-slate-400">{p.example}</td>
-                          <td className="py-1 text-slate-600 dark:text-slate-300">{p.description}</td>
+                          <td className="py-1 pr-4 font-mono text-ink-primary">{p.name}</td>
+                          <td className="py-1 pr-4 text-ink-tertiary">{p.type}</td>
+                          <td className="py-1 pr-4 text-ink-secondary">{p.example}</td>
+                          <td className="py-1 text-ink-secondary">{p.description}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -102,10 +102,13 @@ export default function DocsPage() {
                 </div>
               )}
 
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-tertiary">
                 Response (200)
               </h3>
-              <pre className="overflow-x-auto rounded-lg bg-white dark:bg-slate-950 p-4 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+              <pre
+                className="overflow-x-auto rounded-md border border-hairline p-4 font-mono text-xs leading-relaxed"
+                style={{ backgroundColor: "var(--bg-subtle)", color: "var(--ink-secondary)" }}
+              >
                 {ep.response}
               </pre>
             </div>
@@ -113,7 +116,14 @@ export default function DocsPage() {
         ))}
       </div>
 
-      <div className="mt-8 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-300">
+      <div
+        className="mt-8 rounded-md border px-4 py-3 text-sm"
+        style={{
+          borderColor: "var(--warn)",
+          color: "var(--warn)",
+          backgroundColor: "var(--warn-bg)",
+        }}
+      >
         <strong>Rate limiting:</strong> The <code>POST /api/update</code> endpoint enforces a
         ~60-second server-side cooldown. If called during cooldown, it returns the current state
         without making a network request. Abuse protection is automatic — no API key needed.
@@ -123,12 +133,16 @@ export default function DocsPage() {
 }
 
 function MethodBadge({ method }: { method: string }) {
-  const color =
-    method === "GET"
-      ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
-      : "bg-brand-500/15 text-brand-300 border-brand-500/30";
+  const isGet = method === "GET";
   return (
-    <span className={`rounded-md border px-2 py-0.5 text-xs font-bold uppercase ${color}`}>
+    <span
+      className="rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
+      style={{
+        borderColor: isGet ? "var(--ok)" : "var(--accent)",
+        color: isGet ? "var(--ok)" : "var(--accent-ink)",
+        backgroundColor: isGet ? "var(--ok-bg)" : "var(--accent-bg)",
+      }}
+    >
       {method}
     </span>
   );

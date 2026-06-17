@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { computeOffers, filterOffers, regionalFreeHighlights, cheapestPaidByRegion } from "@/lib/aggregate";
+import { computeOffersCached, filterOffers, regionalFreeHighlights, cheapestPaidByRegion } from "@/lib/aggregate";
 import { getRates, getLastUpdateAt, cooldownRemaining } from "@/lib/store";
 import { PROVIDERS } from "@/data/catalog";
 
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const freeOnly = searchParams.get("freeOnly") === "1" || searchParams.get("freeOnly") === "true";
 
   const rates = getRates();
-  const all = computeOffers(rates.rates);
+  const all = computeOffersCached(rates.rates);
   const filtered = filterOffers(all, { regionCode, providerId, freeOnly });
 
   return NextResponse.json({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { memo, useMemo } from "react";
 import type { ComputedOffer, Region } from "@/lib/types";
 import { formatLocalPrice, formatUsd } from "@/lib/format";
 import type { BillingMode } from "@/components/Toolbar";
@@ -9,58 +9,38 @@ interface Props {
   regions: Region[];
   regionA: string;
   regionB: string;
-  /** Optional pre-filtered offers; ignored in favor of an internal unfiltered fetch. */
-  offers?: ComputedOffer[];
+  /** The full, unfiltered offer set (owned by the page, fetched once). */
+  offers: ComputedOffer[];
   billing: BillingMode;
   onSetRegionA: (c: string) => void;
   onSetRegionB: (c: string) => void;
 }
 
 /**
- * Side-by-side comparison of two regions: cheapest paid tier per provider,
- * showing local price and USD equivalent for each.
- *
- * Fetches its OWN unfiltered offer set so it works regardless of the main
- * region filter applied elsewhere on the page.
+ * Side-by-side comparison of two regions. Operates entirely on the offer set
+ * passed in via props — no extra requests.
  */
-export function RegionCompare({
+function RegionCompareBase({
   regions,
   regionA,
   regionB,
+  offers,
   billing,
   onSetRegionA,
   onSetRegionB,
 }: Props) {
-  const [allOffers, setAllOffers] = useState<ComputedOffer[]>([]);
-
-  // Fetch every offer (no region/provider filter) once on mount.
-  useEffect(() => {
-    let active = true;
-    fetch("/api/offers", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((j: { offers: ComputedOffer[] }) => {
-        if (active) setAllOffers(j.offers ?? []);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, []);
-
   const offersA = useMemo(
-    () => allOffers.filter((o) => o.regionCode === regionA && !o.isFree),
-    [allOffers, regionA],
+    () => offers.filter((o) => o.regionCode === regionA && !o.isFree),
+    [offers, regionA],
   );
   const offersB = useMemo(
-    () => allOffers.filter((o) => o.regionCode === regionB && !o.isFree),
-    [allOffers, regionB],
+    () => offers.filter((o) => o.regionCode === regionB && !o.isFree),
+    [offers, regionB],
   );
 
-  // Cheapest per provider per region.
   const mapA = useMemo(() => cheapestByProvider(offersA, billing), [offersA, billing]);
   const mapB = useMemo(() => cheapestByProvider(offersB, billing), [offersB, billing]);
 
-  // Merge provider ids from both.
   const allIds = useMemo(
     () => [...new Set([...mapA.keys(), ...mapB.keys()])],
     [mapA, mapB],
@@ -70,30 +50,29 @@ export function RegionCompare({
 
   return (
     <section className="card mb-6 p-5">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <h2 className="mb-4 text-xs font-medium uppercase tracking-wide text-ink-tertiary">
         Region comparison
       </h2>
 
-      {/* Region selectors */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <RegionSelect label="A" regions={regions} value={regionA} onChange={onSetRegionA} />
-        <span className="text-slate-500 dark:text-slate-600">vs</span>
+        <span className="text-sm text-ink-tertiary">vs</span>
         <RegionSelect label="B" regions={regions} value={regionB} onChange={onSetRegionB} />
       </div>
 
       {allIds.length === 0 ? (
-        <p className="text-sm text-slate-400 dark:text-slate-500">Select two regions to compare.</p>
+        <p className="text-sm text-ink-tertiary">Select two regions to compare.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                <th className="px-3 py-2 font-medium">Provider</th>
-                <th className="px-3 py-2 text-right font-medium">{regionA || "Region A"}</th>
-                <th className="px-3 py-2 text-right font-medium">USD</th>
-                <th className="px-3 py-2 text-right font-medium">{regionB || "Region B"}</th>
-                <th className="px-3 py-2 text-right font-medium">USD</th>
-                <th className="px-3 py-2 text-right font-medium">Diff</th>
+              <tr className="border-b border-hairline text-left text-xs uppercase tracking-wide text-ink-tertiary">
+                <th scope="col" className="px-3 py-2 font-medium">Provider</th>
+                <th scope="col" className="px-3 py-2 text-right font-medium">{regionA || "Region A"}</th>
+                <th scope="col" className="px-3 py-2 text-right font-medium">USD</th>
+                <th scope="col" className="px-3 py-2 text-right font-medium">{regionB || "Region B"}</th>
+                <th scope="col" className="px-3 py-2 text-right font-medium">USD</th>
+                <th scope="col" className="px-3 py-2 text-right font-medium" title="B priced relative to A — green means B is cheaper">Diff (B−A)</th>
               </tr>
             </thead>
             <tbody>
@@ -105,45 +84,41 @@ export function RegionCompare({
                 const usdB = b ? effUsd(b, billing) : 0;
                 const diff = usdB - usdA;
                 return (
-                  <tr key={pid} className="border-b border-slate-200/60 dark:border-slate-200 dark:border-slate-800/60">
+                  <tr key={pid} className="border-b border-hairline">
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-1.5">
                         <span
                           className="h-2 w-2 rounded-full"
                           style={{ backgroundColor: a?.providerColor ?? b?.providerColor }}
+                          aria-hidden="true"
                         />
-                        <span className="font-medium text-slate-700 dark:text-slate-200">
+                        <span className="font-medium text-ink-primary">
                           {a?.providerName ?? b?.providerName}
                         </span>
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-right text-slate-600 dark:text-slate-300">
-                      {a
-                        ? formatLocalPrice(effLocal(a, billing), a.currency, a.symbol)
-                        : "—"}
+                    <td className="px-3 py-2 text-right text-ink-secondary">
+                      {a ? formatLocalPrice(effLocal(a, billing), a.currency, a.symbol) : "—"}
                     </td>
-                    <td className="px-3 py-2 text-right text-slate-400 dark:text-slate-500">
+                    <td className="px-3 py-2 text-right text-ink-tertiary">
                       {a ? formatUsd(usdA) : "—"}
                     </td>
-                    <td className="px-3 py-2 text-right text-slate-600 dark:text-slate-300">
-                      {b
-                        ? formatLocalPrice(effLocal(b, billing), b.currency, b.symbol)
-                        : "—"}
+                    <td className="px-3 py-2 text-right text-ink-secondary">
+                      {b ? formatLocalPrice(effLocal(b, billing), b.currency, b.symbol) : "—"}
                     </td>
-                    <td className="px-3 py-2 text-right text-slate-400 dark:text-slate-500">
+                    <td className="px-3 py-2 text-right text-ink-tertiary">
                       {b ? formatUsd(usdB) : "—"}
                     </td>
                     <td className="px-3 py-2 text-right">
                       {a && b && diff !== 0 ? (
                         <span
-                          className={`text-xs font-semibold ${
-                            diff < 0 ? "text-emerald-400" : "text-red-400"
-                          }`}
+                          className="text-xs font-semibold"
+                          style={{ color: diff < 0 ? "var(--ok)" : "var(--danger)" }}
                         >
                           {diff < 0 ? "↓" : "↑"} ${Math.abs(diff).toFixed(2)}
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-500 dark:text-slate-600">—</span>
+                        <span className="text-xs text-ink-tertiary">—</span>
                       )}
                     </td>
                   </tr>
@@ -156,6 +131,8 @@ export function RegionCompare({
     </section>
   );
 }
+
+export const RegionCompare = memo(RegionCompareBase);
 
 function RegionSelect({
   label,
@@ -170,13 +147,14 @@ function RegionSelect({
 }) {
   return (
     <label className="flex items-center gap-2 text-sm">
-      <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-xs font-bold text-brand-300">
-        {label}
+      <span className="text-xs font-medium uppercase tracking-wide text-ink-tertiary">
+        Region {label}
       </span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-1.5 pl-2 pr-8 text-sm font-medium text-slate-800 dark:text-slate-100 outline-none transition focus:border-brand-500"
+        aria-label={`Comparison region ${label}`}
+        className="rounded-md border border-hairline bg-canvas py-1.5 pl-2 pr-8 text-sm font-medium text-ink-primary outline-none transition hover:border-hairline-strong focus:border-hairline-strong"
       >
         <option value="">Select region…</option>
         {regions.map((r) => (

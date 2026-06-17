@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { computeOffers } from "@/lib/aggregate";
+import { computeOffersCached, filterOffers } from "@/lib/aggregate";
 import { getRates } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -17,13 +17,9 @@ export async function GET(request: Request) {
   const freeOnly = searchParams.get("freeOnly") === "1" || searchParams.get("freeOnly") === "true";
 
   const rates = getRates();
-  const all = computeOffers(rates.rates);
-  const filtered = all.filter((o) => {
-    if (regionCode && o.regionCode !== regionCode) return false;
-    if (providerId && o.providerId !== providerId) return false;
-    if (freeOnly && !o.isFree) return false;
-    return true;
-  });
+  const all = computeOffersCached(rates.rates);
+  // Reuse the shared filter so /api/export and /api/offers can never drift apart.
+  const filtered = filterOffers(all, { regionCode, providerId, freeOnly });
 
   const header = "Provider,Tier,Region,Currency,Local Price,USD Equivalent,Billing,Free,Annual Local,Annual USD,Regional Offer";
   const rows = filtered.map((o) =>

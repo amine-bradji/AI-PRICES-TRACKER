@@ -1,15 +1,24 @@
 /** Display helpers for money + time. Client-safe (no Node APIs). */
 
+// Constructing an Intl.NumberFormat is far costlier than calling .format() on it
+// (it does locale-data lookup each time). We render up to ~500 price cells per
+// table render, so cache the two formatters we actually need and reuse them.
+const decimalFormatter = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+const zeroDecimalFormatter = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
+// Currencies with no fractional units — don't show decimals there.
+const ZERO_DECIMAL = new Set(["JPY", "KRW", "IDR", "VND", "CLP", "HUF"]);
+
 export function formatLocalPrice(amount: number, currency: string, symbol: string): string {
   if (amount === 0) return "Free";
-  // JPY/KRW/etc. have no fractional units — don't show decimals there.
-  const zeroDecimal = ["JPY", "KRW", "IDR", "VND", "CLP", "HUF"].includes(currency);
-  const opts: Intl.NumberFormatOptions = {
-    minimumFractionDigits: zeroDecimal ? 0 : 2,
-    maximumFractionDigits: zeroDecimal ? 0 : 2,
-  };
-  const num = new Intl.NumberFormat("en-US", opts).format(amount);
-  return `${symbol}${num}`;
+  const fmt = ZERO_DECIMAL.has(currency) ? zeroDecimalFormatter : decimalFormatter;
+  return `${symbol}${fmt.format(amount)}`;
 }
 
 export function formatUsd(amount: number): string {

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { UpdateButton } from "@/components/UpdateButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -11,23 +12,26 @@ interface Props {
   onUpdate: () => void;
 }
 
-export function Header({ updatedAt, cooldown, updating, fxSource, onUpdate }: Props) {
+function HeaderBase({ updatedAt, cooldown, updating, fxSource, onUpdate }: Props) {
   return (
     <header className="card mb-6 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-emerald-500 text-2xl shadow-lg shadow-brand-500/30">
-          🤖
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-hairline bg-subtle text-sm font-semibold tracking-tight text-ink-primary"
+          aria-hidden="true"
+        >
+          AI
         </div>
-        <div>
-          <h1 className="text-lg font-bold tracking-tight sm:text-xl">
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-semibold tracking-tight text-ink-primary sm:text-xl">
             AI Price Tracker
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Monitor AI subscriptions worldwide · spot free offers
+          <p className="truncate text-sm text-ink-secondary">
+            Monitor AI subscription prices worldwide and spot regional free offers.
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <ThemeToggle />
         <UpdateButton
           onClick={onUpdate}
@@ -40,3 +44,5 @@ export function Header({ updatedAt, cooldown, updating, fxSource, onUpdate }: Pr
     </header>
   );
 }
+
+export const Header = memo(HeaderBase);

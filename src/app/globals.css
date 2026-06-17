@@ -2,105 +2,244 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Design tokens
+ * --------------
+ * Calm, neutral, document-like look. No gradient glow, no glass blur, no
+ * colored shadows, no animated brand washes. Light and dark are first-class
+ * peers — not "light = washed dark".
+ *
+ * Surface ramp: page -> canvas (default cards) -> raised (popovers).
+ * Ink ramp:    primary -> secondary -> tertiary.
+ * Single accent (a calm blue) used sparingly.
+ */
+
 :root {
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  /* Light theme tokens (default when .dark is absent) */
-  --bg-base: #f1f5f9; /* slate-100 */
-  --bg-glow-1: rgba(50, 157, 255, 0.1);
-  --bg-glow-2: rgba(16, 163, 127, 0.08);
-  --text-base: #0f172a; /* slate-900 */
-  --text-muted: #475569; /* slate-600 */
-  --card-bg: rgba(255, 255, 255, 0.75);
-  --card-border: rgba(203, 213, 225, 0.8); /* slate-300 */
-  --card-shadow: rgba(15, 23, 42, 0.08);
-  --chip-border: #cbd5e1; /* slate-300 */
-  --chip-bg: rgba(241, 245, 249, 0.8); /* slate-100 */
-  --chip-text: #334155; /* slate-700 */
-  --chip-hover-border: #94a3b8; /* slate-400 */
-  --chip-hover-bg: rgba(226, 232, 240, 0.9); /* slate-200 */
-  --scrollbar: #cbd5e1;
-  --scrollbar-hover: #94a3b8;
+  --bg-page: #f7f7f5;          /* warm off-white, not pure */
+  --bg-canvas: #ffffff;         /* default card */
+  --bg-raised: #ffffff;         /* popover / hover layer */
+  --bg-subtle: #f1f1ef;         /* zebra row / chip base */
+  --bg-sunken: #ecece9;         /* inset wells */
+
+  --ink-primary: #111111;       /* main text */
+  --ink-secondary: #4b5563;     /* muted text */
+  --ink-tertiary: #6b7280;      /* captions */
+  --ink-inverse: #ffffff;       /* on dark */
+
+  --line-default: #e5e5e2;
+  --line-strong: #d4d4d1;
+  --line-focus: #111111;        /* monochrome focus ring */
+
+  --accent: #1f4ed8;
+  --accent-ink: #1e3a8a;        /* darker for text on light bg */
+  --accent-bg: #eef2ff;         /* light tint for selected chips */
+
+  --ok: #15803d;
+  --ok-bg: #ecfdf5;
+  --warn: #b45309;
+  --warn-bg: #fffbeb;
+  --danger: #b91c1c;
+  --danger-bg: #fef2f2;
 }
 
 html.dark {
-  /* Dark theme tokens */
-  --bg-base: #020617; /* slate-950 */
-  --bg-glow-1: rgba(50, 157, 255, 0.12);
-  --bg-glow-2: rgba(16, 163, 127, 0.1);
-  --text-base: #f1f5f9; /* slate-100 */
-  --text-muted: #94a3b8; /* slate-400 */
-  --card-bg: rgba(15, 23, 42, 0.6); /* slate-900/60 */
-  --card-border: rgba(30, 41, 59, 0.8); /* slate-800 */
-  --card-shadow: rgba(0, 0, 0, 0.2);
-  --chip-border: #334155; /* slate-700 */
-  --chip-bg: rgba(30, 41, 59, 0.6); /* slate-800/60 */
-  --chip-text: #e2e8f0; /* slate-200 */
-  --chip-hover-border: #64748b; /* slate-500 */
-  --chip-hover-bg: rgba(51, 65, 85, 0.6); /* slate-700/60 */
-  --scrollbar: #334155; /* slate-700 */
-  --scrollbar-hover: #475569; /* slate-600 */
+  --bg-page: #0b0b0c;           /* near-black, slight cool tint */
+  --bg-canvas: #151517;         /* card */
+  --bg-raised: #1c1c1f;         /* popover */
+  --bg-subtle: #1a1a1c;         /* zebra */
+  --bg-sunken: #0f0f10;         /* inset wells */
+
+  --ink-primary: #f5f5f4;
+  --ink-secondary: #a1a1aa;
+  --ink-tertiary: #71717a;
+  --ink-inverse: #0b0b0c;
+
+  --line-default: #27272a;
+  --line-strong: #3f3f46;
+  --line-focus: #f5f5f4;
+
+  --accent: #93a3f8;            /* lighter blue that hits AA on dark */
+  --accent-ink: #c7d2fe;
+  --accent-bg: #1e1b4b;         /* deep indigo tint for selected chip */
+
+  --ok: #4ade80;
+  --ok-bg: #052e16;
+  --warn: #fbbf24;
+  --warn-bg: #1f1407;
+  --danger: #f87171;
+  --danger-bg: #1f0a0a;
 }
 
 html {
   scroll-behavior: smooth;
+  color-scheme: light dark;
 }
 
 body {
-  background-color: var(--bg-base);
-  color: var(--text-base);
+  background-color: var(--bg-page);
+  color: var(--ink-primary);
   -webkit-font-smoothing: antialiased;
-  background-image:
-    radial-gradient(60rem 60rem at 110% -10%, var(--bg-glow-1), transparent 60%),
-    radial-gradient(50rem 50rem at -10% 0%, var(--bg-glow-2), transparent 55%);
-  background-attachment: fixed;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  text-rendering: optimizeLegibility;
+  font-family: var(--font-sans);
+  /* Coherent theme crossfade: every themed surface animates as a unit. */
+  transition: background-color 220ms ease, color 220ms ease;
 }
 
-/* Custom scrollbar for the data-dense tables. */
+/* Custom scrollbar — neutral. */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar);
+  background-color: var(--line-strong);
   border-radius: 9999px;
+  border: 2px solid var(--bg-page);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--scrollbar-hover);
+  background-color: var(--ink-tertiary);
+}
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+@layer base {
+  button, input, select, textarea {
+    font: inherit;
+    color: inherit;
+  }
+  /* Single dark/light focus ring — not a brand glow. */
+  :focus-visible {
+    outline: 2px solid var(--line-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
 @layer components {
   .card {
-    border-radius: 1rem;
-    border: 1px solid var(--card-border);
-    background-color: var(--card-bg);
-    backdrop-filter: blur(4px);
-    box-shadow: 0 10px 15px -3px var(--card-shadow);
-    transition: background-color 0.2s ease, border-color 0.2s ease;
+    background-color: var(--bg-canvas);
+    border: 1px solid var(--line-default);
+    border-radius: 12px;
+    box-shadow: 0 1px 0 0 var(--line-default);
+    transition: background-color 220ms ease, border-color 220ms ease, color 220ms ease;
   }
+
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium transition;
-    border: 1px solid var(--chip-border);
-    background-color: var(--chip-bg);
-    color: var(--chip-text);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 9999px;
+    padding: 0.3125rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1;
+    border: 1px solid var(--line-default);
+    background-color: var(--bg-canvas);
+    color: var(--ink-secondary);
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
   }
   .chip:hover {
-    border-color: var(--chip-hover-border);
-    background-color: var(--chip-hover-bg);
+    background-color: var(--bg-subtle);
+    border-color: var(--line-strong);
+    color: var(--ink-primary);
+  }
+  .chip:active {
+    transform: scale(0.97);
   }
   .chip-active {
-    @apply border-brand-500 text-white;
-    background-color: rgba(50, 157, 255, 0.15);
+    background-color: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .chip-active:hover {
+    background-color: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .skeleton {
+    display: inline-block;
+    border-radius: 6px;
+    background-color: var(--bg-subtle);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 8px;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.2;
+    border: 1px solid var(--line-default);
+    background-color: var(--bg-canvas);
+    color: var(--ink-primary);
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 80ms ease;
+  }
+  .btn:hover:not(:disabled) {
+    background-color: var(--bg-subtle);
+    border-color: var(--line-strong);
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(0.5px);
+  }
+  .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .btn-primary {
+    background-color: var(--ink-primary);
+    border-color: var(--ink-primary);
+    color: var(--ink-inverse);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: #000;
+    border-color: #000;
+  }
+  html.dark .btn-primary:hover:not(:disabled) {
+    background-color: #fafafa;
+    border-color: #fafafa;
+    color: #0b0b0c;
   }
 }
 
-/* Utility text classes that follow the theme tokens. */
 @layer utilities {
-  .t-base {
-    color: var(--text-base);
+  .t-base { color: var(--ink-primary); }
+  .t-muted { color: var(--ink-secondary); }
+  .t-faint { color: var(--ink-tertiary); }
+  .bg-page { background-color: var(--bg-page); }
+  .bg-canvas { background-color: var(--bg-canvas); }
+  .bg-subtle { background-color: var(--bg-subtle); }
+  .border-hairline { border-color: var(--line-default); }
+  .border-hairline-strong { border-color: var(--line-strong); }
+  .text-ink-primary { color: var(--ink-primary); }
+  .text-ink-secondary { color: var(--ink-secondary); }
+  .text-ink-tertiary { color: var(--ink-tertiary); }
+}
+
+/* Respect users who ask for less motion (WCAG 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-  .t-muted {
-    color: var(--text-muted);
-  }
+}
+
+/*
+ * During a theme switch, briefly suppress transitions on every themed element
+ * to avoid mid-animation flashes on deeply nested cards. The 220ms body
+ * crossfade carries the visual handoff; this is a safety net.
+ */
+html.theme-switching,
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
 }

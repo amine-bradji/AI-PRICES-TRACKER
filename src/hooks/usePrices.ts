@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ComputedOffer, Provider, Region } from "@/lib/types";
+import type { ComputedOffer, Provider } from "@/lib/types";
 
 export interface OffersResponse {
   updatedAt: number;
@@ -18,12 +18,6 @@ export interface OffersResponse {
   };
 }
 
-export interface RegionsResponse {
-  regions: Region[];
-  updatedAt: number;
-  cooldownRemaining: number;
-}
-
 export interface UpdateResponse {
   ok: boolean;
   updatedAt: number;
@@ -33,19 +27,16 @@ export interface UpdateResponse {
   message?: string;
 }
 
-interface UsePricesArgs {
-  regionCode?: string;
-  providerId?: string;
-  freeOnly?: boolean;
-}
-
 /**
- * Fetches regions + filtered offers and exposes an `update()` action bound to
- * the Update button. Owns the client-side cooldown countdown so the button stays
+ * Fetches the FULL (unfiltered) offer set ONCE on mount and again only when the
+ * Update button refreshes FX. The dataset is tiny (~500 rows / tens of KB), so
+ * region/provider/free/search/sort all happen instantly in the client (see
+ * page.tsx) instead of paying a network round-trip per interaction.
+ *
+ * Also owns the client-side cooldown countdown so the Update button stays
  * disabled until the server allows another refresh.
  */
-export function usePrices({ regionCode, providerId, freeOnly }: UsePricesArgs) {
-  const [regions, setRegions] = useState<Region[]>([]);
+export function usePrices() {
   const [data, setData] = useState<OffersResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -53,34 +44,23 @@ export function usePrices({ regionCode, providerId, freeOnly }: UsePricesArgs) {
   const [lastMessage, setLastMessage] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Fetch the complete, unfiltered offer set. Filtering is done client-side.
   const fetchOffers = useCallback(async () => {
-    const params = new URLSearchParams();
-    if (regionCode) params.set("region", regionCode);
-    if (providerId) params.set("provider", providerId);
-    if (freeOnly) params.set("freeOnly", "1");
-    const res = await fetch(`/api/offers?${params.toString()}`, { cache: "no-store" });
+    const res = await fetch("/api/offers", { cache: "no-store" });
     if (!res.ok) throw new Error(`offers ${res.status}`);
     const json: OffersResponse = await res.json();
     setData(json);
     setCooldown(json.cooldownRemaining);
     return json;
-  }, [regionCode, providerId, freeOnly]);
-
-  const fetchRegions = useCallback(async () => {
-    const res = await fetch("/api/regions", { cache: "no-store" });
-    if (!res.ok) throw new Error(`regions ${res.status}`);
-    const json: RegionsResponse = await res.json();
-    setRegions(json.regions);
-    setCooldown(json.cooldownRemaining);
   }, []);
 
-  // Initial load.
+  // Initial load — exactly one offers request.
   useEffect(() => {
     let active = true;
     (async () => {
       setLoading(true);
       try {
-        await Promise.all([fetchRegions(), fetchOffers()]);
+        await fetchOffers();
       } catch {
         // swallow — UI shows empty/loading state
       } finally {
@@ -90,11 +70,6 @@ export function usePrices({ regionCode, providerId, freeOnly }: UsePricesArgs) {
     return () => {
       active = false;
     };
-  }, [fetchRegions, fetchOffers]);
-
-  // Refetch offers whenever filters change.
-  useEffect(() => {
-    fetchOffers().catch(() => {});
   }, [fetchOffers]);
 
   // Client-side cooldown countdown.
@@ -131,7 +106,6 @@ export function usePrices({ regionCode, providerId, freeOnly }: UsePricesArgs) {
   }, [updating, cooldown, fetchOffers]);
 
   return {
-    regions,
     data,
     loading,
     updating,

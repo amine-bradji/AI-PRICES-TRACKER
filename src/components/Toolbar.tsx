@@ -1,5 +1,7 @@
 "use client";
 
+import { memo } from "react";
+
 export type ViewMode = "table" | "cards";
 export type BillingMode = "monthly" | "annual";
 
@@ -10,62 +12,65 @@ interface Props {
   onBillingChange: (b: BillingMode) => void;
 }
 
-/** Small segmented control toolbar: view mode (table/cards) + billing (monthly/annual). */
-export function Toolbar({ view, onViewChange, billing, onBillingChange }: Props) {
+const VIEW_OPTIONS: { value: ViewMode; label: string }[] = [
+  { value: "table", label: "Table" },
+  { value: "cards", label: "Cards" },
+];
+const BILLING_OPTIONS: { value: BillingMode; label: string }[] = [
+  { value: "monthly", label: "Monthly" },
+  { value: "annual", label: "Annual" },
+];
+
+/** Segmented control toolbar: view mode (table/cards) + billing (monthly/annual). */
+function ToolbarBase({ view, onViewChange, billing, onBillingChange }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <Segmented
-        label="View"
-        options={[
-          { value: "table", label: "📋 Table" },
-          { value: "cards", label: "🃏 Cards" },
-        ]}
-        value={view}
-        onChange={(v) => onViewChange(v as ViewMode)}
-      />
-      <Segmented
-        label="Billing"
-        options={[
-          { value: "monthly", label: "Monthly" },
-          { value: "annual", label: "Annual" },
-        ]}
-        value={billing}
-        onChange={(v) => onBillingChange(v as BillingMode)}
-      />
+      <Segmented label="View" options={VIEW_OPTIONS} value={view} onChange={(v) => onViewChange(v as ViewMode)} />
+      <Segmented label="Billing" options={BILLING_OPTIONS} value={billing} onChange={(v) => onBillingChange(v as BillingMode)} />
     </div>
   );
 }
 
-function Segmented({
+export const Toolbar = memo(ToolbarBase);
+
+function Segmented<T extends string>({
   label,
   options,
   value,
   onChange,
 }: {
   label: string;
-  options: { value: string; label: string }[];
-  value: string;
-  onChange: (v: string) => void;
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <span className="text-xs font-medium uppercase tracking-wide text-ink-tertiary">
         {label}
       </span>
-      <div className="flex rounded-xl border border-slate-300 dark:border-slate-700 bg-gray-50/80 dark:bg-white dark:bg-slate-900/60 p-0.5">
-        {options.map((o) => (
-          <button
-            key={o.value}
-            onClick={() => onChange(o.value)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-              value === o.value
-                ? "bg-brand-500 text-white shadow"
-                : "text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white"
-            }`}
-          >
-            {o.label}
-          </button>
-        ))}
+      <div
+        role="group"
+        className="flex rounded-md border border-hairline bg-canvas p-0.5"
+      >
+        {options.map((o) => {
+          const active = value === o.value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              aria-pressed={active}
+              onClick={() => onChange(o.value)}
+              className={`rounded-[5px] px-3 py-1 text-sm font-medium transition ${
+                active
+                  ? "bg-ink-primary text-ink-inverse"
+                  : "text-ink-secondary hover:text-ink-primary"
+              }`}
+            >
+              {o.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

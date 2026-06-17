@@ -1,0 +1,36 @@
+
+> ai-price-tracker@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ✓ Ready in 6.8s
+ ○ Compiling /api/regions ...
+ ✓ Compiled /api/regions in 775ms (59 modules)
+ GET /api/regions 200 in 917ms
+ ✓ Compiled /api/offers in 174ms (63 modules)
+ GET /api/offers?region=KR 200 in 222ms
+ ✓ Compiled /api/update in 136ms (65 modules)
+ POST /api/update 200 in 981ms
+ POST /api/update 200 in 16ms
+ ○ Compiling / ...
+ ✓ Compiled / in 4.6s (520 modules)
+ GET / 200 in 4809ms
+ ✓ Compiled in 474ms (249 modules)
+ ✓ Compiled in 244ms (249 modules)
+ ✓ Compiled in 174ms (249 modules)
+ ✓ Compiled in 182ms (249 modules)
+ ✓ Compiled in 181ms (249 modules)
+ ✓ Compiled in 173ms (249 modules)
+ ✓ Compiled in 193ms (249 modules)
+ ✓ Compiled in 129ms (249 modules)
+ ✓ Compiled in 189ms (249 modules)
+ ✓ Compiled in 157ms (249 modules)
+ ✓ Compiled in 471ms (249 modules)
+ ✓ Compiled in 182ms (249 modules)
+ ✓ Compiled in 154ms (249 modules)
+ ✓ Compiled in 306ms (252 modules)
+ ✓ Compiled /api/offers in 217ms (61 modules)
+ GET /api/offers?region=US&provider=openai 200 in 290ms

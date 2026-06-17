@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Light theme tokens (default when .dark is absent) */
+  --bg-base: #f1f5f9; /* slate-100 */
+  --bg-glow-1: rgba(50, 157, 255, 0.1);
+  --bg-glow-2: rgba(16, 163, 127, 0.08);
+  --text-base: #0f172a; /* slate-900 */
+  --text-muted: #475569; /* slate-600 */
+  --card-bg: rgba(255, 255, 255, 0.75);
+  --card-border: rgba(203, 213, 225, 0.8); /* slate-300 */
+  --card-shadow: rgba(15, 23, 42, 0.08);
+  --chip-border: #cbd5e1; /* slate-300 */
+  --chip-bg: rgba(241, 245, 249, 0.8); /* slate-100 */
+  --chip-text: #334155; /* slate-700 */
+  --chip-hover-border: #94a3b8; /* slate-400 */
+  --chip-hover-bg: rgba(226, 232, 240, 0.9); /* slate-200 */
+  --scrollbar: #cbd5e1;
+  --scrollbar-hover: #94a3b8;
+}
+
+html.dark {
+  /* Dark theme tokens */
+  --bg-base: #020617; /* slate-950 */
+  --bg-glow-1: rgba(50, 157, 255, 0.12);
+  --bg-glow-2: rgba(16, 163, 127, 0.1);
+  --text-base: #f1f5f9; /* slate-100 */
+  --text-muted: #94a3b8; /* slate-400 */
+  --card-bg: rgba(15, 23, 42, 0.6); /* slate-900/60 */
+  --card-border: rgba(30, 41, 59, 0.8); /* slate-800 */
+  --card-shadow: rgba(0, 0, 0, 0.2);
+  --chip-border: #334155; /* slate-700 */
+  --chip-bg: rgba(30, 41, 59, 0.6); /* slate-800/60 */
+  --chip-text: #e2e8f0; /* slate-200 */
+  --chip-hover-border: #64748b; /* slate-500 */
+  --chip-hover-bg: rgba(51, 65, 85, 0.6); /* slate-700/60 */
+  --scrollbar: #334155; /* slate-700 */
+  --scrollbar-hover: #475569; /* slate-600 */
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-base);
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(60rem 60rem at 110% -10%, var(--bg-glow-1), transparent 60%),
+    radial-gradient(50rem 50rem at -10% 0%, var(--bg-glow-2), transparent 55%);
+  background-attachment: fixed;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Custom scrollbar for the data-dense tables. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-hover);
+}
+
+@layer components {
+  .card {
+    border-radius: 1rem;
+    border: 1px solid var(--card-border);
+    background-color: var(--card-bg);
+    backdrop-filter: blur(4px);
+    box-shadow: 0 10px 15px -3px var(--card-shadow);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium transition;
+    border: 1px solid var(--chip-border);
+    background-color: var(--chip-bg);
+    color: var(--chip-text);
+  }
+  .chip:hover {
+    border-color: var(--chip-hover-border);
+    background-color: var(--chip-hover-bg);
+  }
+  .chip-active {
+    @apply border-brand-500 text-white;
+    background-color: rgba(50, 157, 255, 0.15);
+  }
+}
+
+/* Utility text classes that follow the theme tokens. */
+@layer utilities {
+  .t-base {
+    color: var(--text-base);
+  }
+  .t-muted {
+    color: var(--text-muted);
+  }
+}
